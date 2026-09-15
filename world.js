@@ -283,14 +283,21 @@
           .setDepth((y + 4) * TILE + 1);
     }
     tree(x, y, autumn = false) {
-      const base = autumn ? 9 : 6;
-      const depth = (y + 2.45) * TILE;
+      // A standalone tree is two vertical tiles. The atlas's 3x3 groups
+      // are forest edge pieces and do not form a single connected tree.
+      const frames = autumn ? [3, 15] : [4, 16];
+      const centerX = (x + 1.5) * TILE;
+      const baseY = (y + 3) * TILE - 4;
       this.add
-        .ellipse((x + 1.6) * TILE, (y + 2.7) * TILE, 65, 24, 0x39552e, 0.16)
+        .ellipse(centerX, baseY, 40, 12, 0x39552e, 0.16)
         .setDepth(1);
-      for (let row = 0; row < 3; row++)
-        for (let col = 0; col < 3; col++)
-          this.tile(base + row * 12 + col, x + col, y + row, depth);
+      frames.forEach((frame, row) => {
+        this.add
+          .image(centerX, y * TILE + row * 48, "town", frame)
+          .setOrigin(0.5, 0)
+          .setScale(3)
+          .setDepth(baseY);
+      });
       this.markBlocked(x + 1, y + 1, 1, 2);
     }
     fence(x, y, w) {
