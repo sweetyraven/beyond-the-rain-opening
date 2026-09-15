@@ -513,7 +513,14 @@
       this.syncHero(0);
     }
     centerPlayer() {
-      this.cameras.main.centerOn(this.player.x, this.player.y - 38);
+      const camera = this.cameras.main;
+      const app = window.RPG_APP;
+      if (app?.inDialogue && document.documentElement.classList.contains("mobile-ui")) {
+        const gameTop = document.getElementById("game").getBoundingClientRect().top;
+        const dialogueTop = document.getElementById("dialogue").getBoundingClientRect().top;
+        const visibleHeight = Math.max(48, dialogueTop - gameTop);
+        camera.centerOn(this.player.x, this.player.y + camera.height / 2 - visibleHeight / 2 - 16);
+      } else camera.centerOn(this.player.x, this.player.y - 38);
     }
     canStand(x, y) {
       if (x < 32 || y < 40 || x > COLS * TILE - 32 || y > ROWS * TILE - 32)

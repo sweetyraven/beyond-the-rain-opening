@@ -16,12 +16,14 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23f4e5b9'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%23d69742'/%3E%3C/svg%3E"
     />
+    <script src="layout.js?v=mobile1"></script>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="mobile.css?v=mobile1" />
     <script defer src="vendor/phaser.min.js"></script>
     <script defer src="story.js"></script>
     <script defer src="audio.js"></script>
-    <script defer src="world.js"></script>
-    <script defer src="main.js"></script>
+    <script defer src="world.js?v=mobile1"></script>
+    <script defer src="main.js?v=mobile1"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -262,6 +264,12 @@
         길을 누르거나 방향키로 이동하세요.<br />사람이나 물건 곁에서
         <b>대화·살펴보기</b>를 누르면 됩니다.
       </p>
+      <label class="setting-row">화면 구성
+        <select id="display-mode">
+          <option value="auto">자동</option>
+          <option value="mobile">휴대폰 · 터치</option>
+        </select>
+      </label>
       <label class="setting-row"
         >글자 표시
         <select id="text-speed">

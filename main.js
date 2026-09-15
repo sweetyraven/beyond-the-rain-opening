@@ -89,6 +89,20 @@
         render: { roundPixels: true, antialias: false },
         input: { activePointers: 3 },
       });
+      // Browser chrome and touch layout settings can resize the parent without
+      // a window resize. Refresh Phaser's canvas and pointer coordinates too.
+      this.layoutObserver = new ResizeObserver(() => {
+        this.clearKeys();
+        if (this.ready) {
+          this.game.scale.getParentBounds();
+          this.game.scale.refresh();
+        }
+      });
+      this.layoutObserver.observe($("game"));
+      this.dialogueObserver = new ResizeObserver(() => {
+        if (this.started && this.inDialogue) this.world.centerPlayer();
+      });
+      this.dialogueObserver.observe($("dialogue"));
       this.saveTimer = setInterval(() => {
         if (this.started) this.save();
       }, 2000);
@@ -114,11 +128,12 @@
         return;
       }
       element.textContent = "";
-      const scale = avatar && innerWidth <= 760 ? 1.8 : 2;
+      const mobile = document.documentElement.classList.contains("mobile-ui");
+      const scale = avatar && mobile ? 1.8 : 2;
       element.style.backgroundImage =
         'url("assets/kenney-tiny-dungeon/Tilemap/tilemap_packed.png")';
       element.style.backgroundSize = `${192 * scale}px ${176 * scale}px`;
-      element.style.backgroundPosition = `${-((frame % 12) * 16) * scale + (avatar && innerWidth > 760 ? 6 : 0)}px ${-Math.floor(frame / 12) * 16 * scale + (avatar && innerWidth > 760 ? 7 : 0)}px`;
+      element.style.backgroundPosition = `${-((frame % 12) * 16) * scale + (avatar && !mobile ? 6 : 0)}px ${-Math.floor(frame / 12) * 16 * scale + (avatar && !mobile ? 7 : 0)}px`;
     }
     bindUI() {
       $("start-button").addEventListener("click", () => this.start(false));
@@ -136,6 +151,7 @@
       });
       $("explore-button").addEventListener("click", () => {
         this.ending = false;
+        document.documentElement.classList.remove("ending-active");
         $("ending-screen").hidden = true;
         this.updateQuest();
         this.world.nearestId = null;
@@ -182,6 +198,10 @@
         this.state.textSpeed = Number(e.target.value);
         this.save();
         if (this.inDialogue) this.finishTyping();
+      });
+      $("display-mode").value = window.RPG_LAYOUT.mode;
+      $("display-mode").addEventListener("change", (e) => {
+        window.RPG_LAYOUT.setMode(e.target.value);
       });
       $("reduced-motion").addEventListener("change", (e) => {
         this.state.reducedMotion = e.target.checked;
@@ -266,9 +286,12 @@
         } else if (this.started)
           this.audio.resume().then(() => this.updateSound());
       });
-      window.addEventListener("resize", () =>
-        this.setPortrait(document.querySelector(".player-avatar"), 98, true),
-      );
+      window.addEventListener("resize", () => this.clearKeys());
+      window.addEventListener("rpg-layoutchange", () => {
+        this.clearKeys();
+        this.setPortrait(document.querySelector(".player-avatar"), 98, true);
+        if (this.started) this.world.centerPlayer();
+      });
     }
     applySettings() {
       document.documentElement.classList.toggle(
@@ -299,6 +322,7 @@
       this.typing = null;
       this.inDialogue = false;
       this.ending = false;
+      document.documentElement.classList.remove("in-dialogue", "ending-active");
       this.afterDialogue = null;
       this.clearKeys();
       $("dialogue").hidden = true;
@@ -381,7 +405,7 @@
       if (this.inDialogue) {
         $("interact-button").disabled = false;
         $("interact-label").textContent = "다음 대사";
-        $("nearby").textContent = "한 번 더 눌러 계속";
+        $("nearby").textContent = "눌러서 계속";
         return;
       }
       const p = window.RPG_WORLD.POSITIONS[id];
@@ -398,6 +422,7 @@
       this.world.route = [];
       this.world.walkTarget = null;
       this.inDialogue = true;
+      document.documentElement.classList.add("in-dialogue");
       this.queue = lines.map((line) => ({ ...line }));
       this.lineIndex = 0;
       this.afterDialogue = after;
@@ -461,6 +486,7 @@
       clearInterval(this.typing);
       this.typing = null;
       this.inDialogue = false;
+      document.documentElement.classList.remove("in-dialogue");
       $("dialogue").hidden = true;
       const after = this.afterDialogue;
       this.afterDialogue = null;
@@ -468,7 +494,9 @@
       if (after) after();
     }
     offerChoice() {
+      this.clearKeys();
       this.inDialogue = true;
+      document.documentElement.classList.add("in-dialogue");
       $("dialogue").hidden = false;
       $("speaker").textContent = "루카";
       this.setPortrait($("portrait"), 98);
@@ -497,6 +525,7 @@
       this.state.stage = 2;
       this.state.completed = true;
       this.ending = true;
+      document.documentElement.classList.add("ending-active");
       $("ending-screen").hidden = false;
       this.updateQuest();
       this.onNearby(null);
